@@ -3,6 +3,7 @@ import { create } from 'zustand';
 export interface Lead {
   name: string;
   email: string;
+  industry: string;
   submitted_at: string;
 }
 

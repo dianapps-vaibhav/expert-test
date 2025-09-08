@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_PUBLIC_KEY") || "invalid_key");
+const resend = new Resend(Deno.env.get("RESEND_API_KEY") || "invalid_key");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,7 +42,7 @@ const generatePersonalizedContent = async (name: string, industry: string) => {
     });
 
     const data = await response.json();
-    return data?.choices[1]?.message?.content;
+    return data?.choices[0]?.message?.content || null;
   } catch (error) {
     console.error('Error generating personalized content:', error);
     // Fallback content
@@ -66,6 +66,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Generated content: ${personalizedContent}`);
 
+    // Ensure we have valid content, fallback if needed
+    const safeContent = personalizedContent || `Hi ${name}! 🚀 Welcome to our innovation community! We're thrilled to have someone from the ${industry} industry join us. Get ready to discover cutting-edge insights, connect with fellow innovators, and unlock new opportunities that will transform how you work. This is just the beginning of your innovation journey!`;
+
     const emailResponse = await resend.emails.send({
       from: "Innovation Community <testing-email@lovable.dev>",
       to: [email],
@@ -78,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; color: white; margin-bottom: 30px;">
             <div style="font-size: 18px; line-height: 1.6;">
-              ${personalizedContent.replace(/\n/g, '<br>')}
+              ${safeContent.replace(/\n/g, '<br>')}
             </div>
           </div>
           
